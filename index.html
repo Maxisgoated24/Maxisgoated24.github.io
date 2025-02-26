@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counter Game</title>
+    <style>
+        body {
+            background-color: gray;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        #counter {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        #button {
+            font-size: 24px;
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            background-color: white;
+            color: black;
+            border-radius: 10px;
+        }
+        #button:hover {
+            background-color: lightgray;
+        }
+        #gambleButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 18px;
+            padding: 10px 20px;
+            background-color: gold;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #upgradeButton {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            font-size: 18px;
+            padding: 10px 20px;
+            background-color: lightblue;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #resetButton {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 18px;
+            padding: 10px 20px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .popup {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: 300px;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            transition: transform 0.3s ease-in-out, opacity 0.3s;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .popup.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+        #message {
+            font-size: 20px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .message-popup {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 18px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease;
+        }
+        .message-popup.show {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <button id="gambleButton">Gamble</button>
+    <button id="upgradeButton">Upgrade</button>
+    <button id="resetButton">Reset</button>
+    
+    <div id="gamblePopup" class="popup">
+        <p>Enter bet amount:</p>
+        <input type="number" id="betAmount" min="1">
+        <button id="gambleSpin">Spin</button>
+        <br>
+        <button class="closePopup">Close</button>
+    </div>
+    
+    <div id="upgradePopup" class="popup">
+        <p>Upgrade Income (Cost: <span id="upgradeCost">$10</span>)</p>
+        <button id="upgradeIncome">Upgrade</button>
+        <br>
+        <button class="closePopup">Close</button>
+    </div>
+    
+    <div id="counter">$0</div>
+    <div id="message"></div>
+    <button id="button">Click Me!</button>
+
+  
+    <div id="messagePopup" class="message-popup"></div>
+
+    <script>
+        let count = localStorage.getItem("counter") ? parseInt(localStorage.getItem("counter")) : 0;
+        let income = localStorage.getItem("income") ? parseInt(localStorage.getItem("income")) : 1;
+        let upgradeCost = localStorage.getItem("upgradeCost") ? parseInt(localStorage.getItem("upgradeCost")) : 10;
+        document.getElementById("counter").innerText = "$" + count;
+        document.getElementById("upgradeCost").innerText = "$" + upgradeCost;
+
+        document.getElementById("button").addEventListener("click", function() {
+            count += income;
+            document.getElementById("counter").innerText = "$" + count;
+            localStorage.setItem("counter", count);
+        });
+
+        document.getElementById("resetButton").addEventListener("click", function() {
+            count = 0;
+            income = 1;
+            upgradeCost = 10;
+            document.getElementById("counter").innerText = "$" + count;
+            document.getElementById("upgradeCost").innerText = "$" + upgradeCost;
+            localStorage.setItem("counter", count);
+            localStorage.setItem("income", income);
+            localStorage.setItem("upgradeCost", upgradeCost);
+        });
+
+        function togglePopup(id) {
+            let popup = document.getElementById(id);
+            popup.classList.toggle("show");
+        }
+
+        document.getElementById("gambleButton").addEventListener("click", function() {
+            togglePopup("gamblePopup");
+        });
+        
+        document.getElementById("upgradeButton").addEventListener("click", function() {
+            togglePopup("upgradePopup");
+        });
+
+        document.querySelectorAll(".closePopup").forEach(button => {
+            button.addEventListener("click", function() {
+                this.parentElement.classList.remove("show");
+            });
+        });
+
+        document.getElementById("upgradeIncome").addEventListener("click", function() {
+            if (count >= upgradeCost) {
+                count -= upgradeCost;
+                income++;
+                upgradeCost += 10;
+                localStorage.setItem("counter", count);
+                localStorage.setItem("income", income);
+                localStorage.setItem("upgradeCost", upgradeCost);
+                document.getElementById("counter").innerText = "$" + count;
+                document.getElementById("upgradeCost").innerText = "$" + upgradeCost;
+                showMessage("Income upgraded! Now you earn " + income + " per click.");
+            } else {
+                showMessage("Not enough money to upgrade!", true);
+            }
+        });
+
+       
+        document.getElementById("gambleSpin").addEventListener("click", function() {
+            let betInput = document.getElementById("betAmount");
+            let betAmount = parseInt(betInput.value);
+
+            if (isNaN(betAmount) || betAmount <= 0) {
+                showMessage("Please enter a valid bet amount.", true);
+                return;
+            }
+
+            if (betAmount > count) {
+                showMessage("You don't have enough money to bet that amount.", true);
+                return;
+            }
+
+            let win = Math.random() < 0.5; 
+
+            if (win) {
+                count += betAmount; 
+                showMessage("🎉 You won! Your new balance is $" + count);
+            } else {
+                count -= betAmount; 
+                showMessage("😢 You lost! Your new balance is $" + count, true);
+            }
+
+            
+            document.getElementById("counter").innerText = "$" + count;
+            localStorage.setItem("counter", count);
+        });
+
+        function showMessage(message, isError = false) {
+            let messagePopup = document.getElementById("messagePopup");
+            messagePopup.innerText = message;
+            messagePopup.style.backgroundColor = isError ? "#e74c3c" : "#27ae60"; 
+            messagePopup.classList.add("show");
+            setTimeout(function() {
+                messagePopup.classList.remove("show");
+            }, 3000); 
+        }
+    </script>
+</body>
+</html>
